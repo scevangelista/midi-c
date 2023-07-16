@@ -42,7 +42,8 @@ void setup(void) {
  * Loop Function
  */
 void loop(void) {
-
+  // Encoder
+  encoderRead(false);
 }
 
 
