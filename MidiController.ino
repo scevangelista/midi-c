@@ -30,6 +30,12 @@ bool bLESW = 0;  // Last position of SW
 void setup(void) {
   // Display Init
   u8g2.begin();
+
+  // Encoder Init
+  pinMode(ECL, INPUT);
+  pinMode(EDT, INPUT);
+  pinMode(ESW, INPUT_PULLUP);
+  nELCL = digitalRead(ECL);
 }
 
 /**
@@ -37,4 +43,60 @@ void setup(void) {
  */
 void loop(void) {
 
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+// Encoder Functions ////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Read the rotary encoder with SW
+ * param bool internal
+ */
+void encoderRead(bool internal) {
+  // Rotate Function
+  nECL = digitalRead(ECL);
+
+  if (nECL != nELCL && nECL == 1) {
+    if (digitalRead(EDT) != nECL) {
+      if (internal) {
+        nEIVL--;
+      } else {
+        nEVL--;
+      }
+    } else {
+      if (internal) {
+        nEIVL++;
+      } else {
+        nEVL++;
+      }
+    }
+    nSysI = millis();
+  }
+
+  nELCL = nECL;
+
+  // Button Function
+  if (digitalRead(ESW) == LOW) {
+    if (bLESW) {
+      bESW = 0;
+    } else {
+      bLESW = bESW = 1;
+    }
+  } else {
+    if (bLESW == 1) {
+      nSysI = millis();
+      bLESW = 0;
+    }
+  }
+}
+
+/**
+ * Verify if encoder has changed
+ * return bool Changed
+ */
+bool encoderStatus() {
+  return (nPos != nEVL || bESW);
 }
