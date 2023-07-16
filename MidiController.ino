@@ -126,3 +126,14 @@ bool encoderStatus() {
 void led(int nLed, int nStatus) {
   digitalWrite(nLed, nStatus);
 }
+
+/**
+ * Execute a sequential LED on or off
+ * param int nSStatus On or Off
+ */
+void ledS(int nSStatus){
+  for (int i = 0; i < nBtn; i++) {
+    led(nLD[i], nSStatus);
+    delay(200);
+  }
+}
