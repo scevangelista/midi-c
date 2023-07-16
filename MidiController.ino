@@ -22,6 +22,17 @@ int nELCL;       // Last Position of CLK
 bool bESW = 0;   // Current position of SW
 bool bLESW = 0;  // Last position of SW
 
+// Display Variables
+int nRoute = 0;     // Current Screen Route
+int nLRoute = -1;   // Last Screen Route
+int nPos = 0;       // List Position
+bool bRefresh = 0;  // Refresh Screen
+
+// System Variables
+int nSysL = 0;            // Language: 0-Português, 1-English
+int nSysP = 0;            // Current Preset
+double nSysI = millis();  // Last Interaction
+
 
 /**
  * Setup Function
