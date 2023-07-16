@@ -47,6 +47,11 @@ void setup(void) {
   pinMode(EDT, INPUT);
   pinMode(ESW, INPUT_PULLUP);
   nELCL = digitalRead(ECL);
+
+  // Initial LED sequence
+  ledInit();
+
+  delay(200);
 }
 
 /**
@@ -135,5 +140,38 @@ void ledS(int nSStatus){
   for (int i = 0; i < nBtn; i++) {
     led(nLD[i], nSStatus);
     delay(200);
+  }
+}
+
+/**
+ * LED Initial Sequence and Reset
+ */
+void ledInit() {
+  // Sequence On
+  ledS(1);
+
+  // Default configuration if encoder is pressed
+  //  in LED Init
+  encoderRead(false);
+  if(bESW){
+    bESW = 0;
+    if (printConfirm()) {
+      nSysL = 0;
+      sysDefault();
+      ledS(0);
+      homeScreen();
+    }
+  }  
+
+  // Blink all leds
+  for (int x = 0; x < 4; x++){
+    for (int i = 0; i < nBtn; i++) {
+      led(nLD[i], 1);
+    }
+    delay(100);
+    for (int i = 0; i < nBtn; i++) {
+      led(nLD[i], 0);
+    }
+    delay(100);
   }
 }
