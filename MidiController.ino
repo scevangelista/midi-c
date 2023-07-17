@@ -28,6 +28,10 @@ int nLRoute = -1;   // Last Screen Route
 int nPos = 0;       // List Position
 bool bRefresh = 0;  // Refresh Screen
 
+// Button Variables
+int nFS;   // Button to configure
+int nFSA;  // Action to configure
+
 // System Variables
 int nSysL = 0;            // Language: 0-Português, 1-English
 int nSysP = 0;            // Current Preset
@@ -74,6 +78,9 @@ void setup(void) {
   // Initial LED sequence
   ledInit();
 
+  // Load EEPROM Data
+  sysLoad();
+
   delay(200);
 }
 
@@ -83,6 +90,9 @@ void setup(void) {
 void loop(void) {
   // Encoder
   encoderRead(false);
+
+  // Execute a screen
+  screen(nRoute, nPos);
 
   // Execute a Midi
   midiExec();
