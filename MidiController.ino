@@ -94,7 +94,7 @@ void loop(void) {
     nSysI = millis();
     screen(0, 0);
   }
-  
+
   // Encoder
   encoderRead(false);
 
@@ -1010,6 +1010,66 @@ void ledInit() {
     }
     delay(100);
   }
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+// Data functions ///////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Load the configuration
+ */
+bool sysLoad() {
+  // Read Language
+  nSysL = EEPROM.read(0);
+
+  // If not exists a language value
+  //  burn default contents into EEPROM
+  if (nSysL == 255) {
+    sysDefault();
+  }
+
+  // Read Preset
+  nSysP = EEPROM.read(1);
+
+  //Serial.println("Loaded data");
+  return true;
+}
+
+/**
+ * Set all default values to system - OK
+ * return bool Sucess
+ */
+bool sysDefault() {
+  int nValeton[] = {0,1,48,0,0,1,49,0,0,1,51,0,0,1,54,0,0,1,55,0,0,1,56,0,0,1,48,64,0,1,49,64,0,1,51,64,0,1,54,64,0,1,55,64,0,1,56,64};
+  int nPodX3[]   = {0,1,48,0,0,1,49,0,0,1,51,0,0,1,54,0,0,1,55,0,0,1,56,0,0,1,48,64,0,1,49,64,0,1,51,64,0,1,54,64,0,1,55,64,0,1,56,64};
+
+  // Language 0 - PT-BR
+  nSysL = 0;
+  EEPROM.update(0, nSysL);
+
+  // Preset selected
+  nSysP = 0;
+  EEPROM.update(1, nSysP);
+
+  // Presets do usuário
+  for(int i = 0; i < 144; i++){
+    EEPROM.update((i + 2), 0);
+  }
+
+  // Valeton
+  for(int i = 0; i < 48; i++){
+    EEPROM.update((i + 146), nValeton[i]);
+  }
+
+  // Valeton
+  for(int i = 0; i < 48; i++){
+    EEPROM.update((i + 194), nPodX3[i]);
+  }
+
+  //Serial.println("Reseted data");
+  return true;
 }
 
 
