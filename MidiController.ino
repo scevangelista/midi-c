@@ -89,6 +89,799 @@ void loop(void) {
 }
 
 
+/////////////////////////////////////////////////////////////////////////////////////
+// Display //////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Screen Router
+ * param int nNewRoute Route
+ * param int nPosSet Selected option
+ */
+void screen(int nNewRoute, int nPosSet) {
+  // New route 
+  if (nNewRoute != nLRoute) {
+    nLRoute = nRoute;
+    nRoute = nNewRoute;
+    bRefresh = true;
+    nEVL = nPos = nPosSet;
+    bESW = false;
+  }
+
+  // Routing
+  switch (nRoute) {
+    case 0:
+      homeScreen();
+      break;
+
+    case 1:
+      configScreen();
+      break;
+
+    case 10:
+      buttonsScreen();
+      break;
+
+    case 100:
+      buttonScreen();
+      break;
+
+    case 101:
+      buttonConfScreen();
+      break;
+
+    case 11:
+      loadScreen();
+      break;
+
+    case 12:
+      saveScreen();
+      break;
+
+    case 13:
+      languageScreen();
+      break;
+  }
+
+  bRefresh = false;
+}
+
+/**
+ * Generate home screen
+ */
+void homeScreen() {
+  // Route to Menu
+  if (bESW) {
+    screen(1, 0);
+    return;
+  }
+
+  // Draw
+  if (bRefresh) {
+    u8g2.clearBuffer();
+    u8g2.setFontPosTop();
+    u8g2.setFontMode(1);
+    u8g2.setDrawColor(2);
+    u8g2.setFont(u8g2_font_maniac_tf);
+    u8g2.drawBox(0, 16, 128, 30);
+    u8g2.drawUTF8(19, 20, "MIDI C");
+    u8g2.setFont(u8g2_font_6x10_tf);
+    u8g2.drawUTF8(50, 53, "1.0.0");
+    u8g2.sendBuffer();
+  }
+}
+
+/**
+ * Generate config menu
+ */
+void configScreen() {
+  char *aLMenu[5];
+  char *cTitleM;
+
+  // Language
+  switch (nSysL) {
+    case 0:  // PT-BR
+      cTitleM = "Configurações";
+      aLMenu[0] = "Configurar Botões";
+      aLMenu[1] = "Carregar Preset";
+      aLMenu[2] = "Salvar Preset";
+      aLMenu[3] = "Idioma";
+      aLMenu[4] = "Sair";
+      break;
+    case 1:  // EN-US
+      cTitleM = "Configurations";
+      aLMenu[0] = "Configure FSW";
+      aLMenu[1] = "Load Preset";
+      aLMenu[2] = "Save Preset";
+      aLMenu[3] = "Language";
+      aLMenu[4] = "Exit";
+  }
+
+  // Route to
+  if (bESW) {
+    switch (nPos) {
+      case 0:  // Button Configure
+        screen(10, 0);
+        break;
+      case 1:  // Load Preset
+        screen(11, nSysP);
+        break;
+      case 2:  // Save Preset
+        screen(12, nSysP);
+        break;
+      case 3:  // Language
+        screen(13, nSysL);
+        break;
+      case 4:  // Home
+        screen(0, 0);
+        break;
+    }
+    return;
+  }
+
+  // Draw
+  if (bRefresh || encoderStatus()) {
+    u8g2.clearBuffer();
+    u8g2.setFontPosTop();
+    printTitle(cTitleM);
+    printOptions(aLMenu, 5, -1);
+    u8g2.sendBuffer();
+
+    bRefresh = false;
+  }
+}
+
+/**
+ * Generate language config
+ */
+void languageScreen() {
+  char *aLList[3];
+  char *cTitleL;
+
+  // Language
+  switch (nSysL) {
+    case 0:  // PT-BR
+      cTitleL = "Idioma";
+      aLList[0] = "Português";
+      aLList[1] = "Inglês";
+      aLList[2] = "Voltar";
+      break;
+    case 1:  // EN-US
+      cTitleL = "Language";
+      aLList[0] = "Portuguese";
+      aLList[1] = "English";
+      aLList[2] = "Back";
+      break;
+  }
+
+  // Change Language
+  if (bESW) {
+    switch (nPos) {
+      case 0:  // PT-BR
+        if (printConfirm()) {
+          nSysL = 0;
+          EEPROM.update(0, 0);
+          printSaved(1, 3);
+          return;
+        }
+        break;
+      case 1:  // EN-US
+        if (printConfirm()) {
+          nSysL = 1;
+          EEPROM.update(0, 1);
+          printSaved(1, 3);
+          return;
+        }
+        break;
+      default:
+        // Return to Menu
+        screen(1, 3);
+        return;
+    }
+
+    bRefresh = true;
+  }
+
+  // Draw
+  if (bRefresh || encoderStatus()) {
+    u8g2.clearBuffer();
+    u8g2.setFontPosTop();
+    printTitle(cTitleL);
+    printOptions(aLList, 3, nSysL);
+    u8g2.sendBuffer();
+
+    bRefresh = false;
+  }
+}
+
+/**
+ * Generate load preset
+ */
+void loadScreen() {
+  char *aPList[6];
+  char *cTitleP;
+
+  // Language
+  switch (nSysL) {
+    case 0:  // PT-BR
+      cTitleP = "Carregar Preset";
+      aPList[0] = "Usuário 1";
+      aPList[1] = "Usuário 2";
+      aPList[2] = "Usuário 3";
+      aPList[5] = "Voltar";
+      break;
+    case 1:  // EN-US
+      cTitleP = "Load Preset";
+      aPList[0] = "User 1";
+      aPList[1] = "User 2";
+      aPList[2] = "User 3";
+      aPList[5] = "Back";
+      break;
+  }
+  aPList[3] = "Valeton GP200";
+  aPList[4] = "POD X3 Live";
+
+  // Load Preset
+  if (bESW) {
+    if (nPos != 5) {
+      if (printConfirm()) {
+        loadPreset(nPos);
+        printSaved(1, 1);
+        return;
+      }
+    }
+    screen(1, 1);
+    return;
+  }
+
+  // Draw
+  if (bRefresh || encoderStatus()) {
+    u8g2.clearBuffer();
+    u8g2.setFontPosTop();
+    printTitle(cTitleP);
+    printOptions(aPList, 6, nSysP);
+    u8g2.sendBuffer();
+
+    bRefresh = false;
+  }
+}
+
+/**
+ * Generate save preset
+ */
+void saveScreen() {
+  char *aSList[4];
+  char *cTitleS;
+
+  // Language
+  switch (nSysL) {
+    case 0:  // PT-BR
+      cTitleS = "Salvar Preset";
+      aSList[0] = "Usuário 1";
+      aSList[1] = "Usuário 2";
+      aSList[2] = "Usuário 3";
+      aSList[3] = "Voltar";
+      break;
+    case 1:  // EN-US
+      cTitleS = "Save Preset";
+      aSList[0] = "User 1";
+      aSList[1] = "User 2";
+      aSList[2] = "User 3";
+      aSList[3] = "Back";
+      break;
+  }
+
+  // Save Preset
+  if (bESW) {
+    if (nPos != 3) {
+      if (printConfirm()) {
+        savePreset(nPos);
+        printSaved(1, 2);
+        return;
+      }
+    }
+    screen(1, 2);
+    return;
+  }
+
+  // Draw
+  if (bRefresh || encoderStatus()) {
+    u8g2.clearBuffer();
+    u8g2.setFontPosTop();
+    printTitle(cTitleS);
+    printOptions(aSList, 4, nSysP);
+    u8g2.sendBuffer();
+
+    bRefresh = false;
+  }
+}
+
+/**
+ * Generate FSW List
+ */
+void buttonsScreen() {
+  char *aFList[7];
+  char *cTitleF;
+
+
+  // Language
+  switch (nSysL) {
+    case 0:  // PT-BR
+      cTitleF = "Configurar FSW";
+      aFList[6] = "Voltar";
+      break;
+    case 1:  // EN-US
+      cTitle = "FSW Configure";
+      aFList[6] = "Back";
+  }
+
+  // Reset FSW to configure
+  nFS = -1;
+
+  // FSW List
+  aFList[0] = "FSW 1";
+  aFList[1] = "FSW 2";
+  aFList[2] = "FSW 3";
+  aFList[3] = "FSW 4";
+  aFList[4] = "FSW 5";
+  aFList[5] = "FSW 6";
+
+  // Select FSW or Return
+  if (bESW) {
+    if (nPos != 6) {
+      nFS = nPos;
+      screen(100, 0);
+      return;
+    }
+    screen(1, 0);
+    return;
+  }
+
+  // Draw
+  if (bRefresh || encoderStatus()) {
+    u8g2.clearBuffer();
+    u8g2.setFontPosTop();
+    printTitle(cTitleF);
+    printOptions(aFList, 7, -1);
+    u8g2.sendBuffer();
+
+    bRefresh = false;
+  }
+}
+
+/**
+ * Generate FSW config actions
+ */
+void buttonScreen() {
+  char *aOList[3];
+  char *cTitleO;
+
+  // Language
+  switch (nSysL) {
+    case 0:  // PT-BR
+      cTitleO = "Ações do FSW";
+      aOList[2] = "Voltar";
+      break;
+    case 1:  // EN-US
+      cTitleO = "Actions of FSW";
+      aOList[2] = "Back";
+  }
+  aOList[0] = "Off";
+  aOList[1] = "On";
+
+  // Select action to config
+  if (bESW) {
+    if (nPos != 2) {
+      nFSA = nPos;
+      screen(101, 0);
+      return;
+    }
+    screen(10, nFS);
+    return;
+  }
+
+  // Draw
+  if (bRefresh || encoderStatus()) {
+    u8g2.clearBuffer();
+    u8g2.setFontPosTop();
+    printTitle(cTitleO);
+    printOptions(aOList, 3, -1);
+    u8g2.sendBuffer();
+
+    bRefresh = false;
+  }
+}
+
+/**
+ * Generate FSW action config
+ */
+void buttonConfScreen() {
+  char *aMList[3];
+  char *cTitleM;
+  char *cTypeM[2];
+  int nPosX = nPos;
+
+  // Type
+  cTypeM[1] = "PC";
+  cTypeM[0] = "CC";
+
+  // Language
+  switch (nSysL) {
+    case 0:  // PT-BR
+      aMList[0] = "Canal";
+      aMList[1] = "Tipo do Comando";
+      aMList[2] = "CC";
+      aMList[3] = "Valor";
+      aMList[4] = "Voltar";
+      break;
+    case 1:  // EN-US
+      aMList[0] = "Channel";
+      aMList[1] = "Command Type";
+      aMList[2] = "Controller CC";
+      aMList[3] = "Value";
+      aMList[4] = "Back";
+  }
+
+  // Title based in action
+  if (nFSA == 0) {
+    cTitle = "FSW ON ";
+  } else {
+    cTitle = "FSW OFF";
+  }
+
+  // Configure MIDI
+  if (bESW) {
+    switch (nPos) {
+      case 0:  // Channel   
+        printValue((aMList[nPos]), nCH[nFS + (nFSA * 6)], 0, 16);
+        Serial.println((String) "Valor Retornado: " + nEIVL);
+        //nCH[nFS + (nFSA * 6)] = nEIVL;
+        bRefresh = true;
+        break;
+
+      case 1: // Type
+        printInternalOptions((aMList[nPos]), cTypeM, 2, nCT[nFS + (nFSA * 6)]);
+        Serial.println((String) "Valor Retornado: "+ nEIVL);
+        Serial.println((nFS + (nFSA * 6)));
+        bRefresh = true;
+        break;
+
+      case 2:  // CC
+        printValue((aMList[nPos]), nCC[nFS + (nFSA * 6)], 0, 254);
+        Serial.println((String) "Valor Retornado: "+ nEIVL);
+        //Serial.println((String) "Posição: "+ (nFS + (nFSA * 6)));
+        //nCC[nFS + (nFSA * 6)] = nEIVL;
+        bRefresh = true;
+        break;
+
+      case 3:  // Value
+        printValue((aMList[nPos]), nVL[nFS + (nFSA * 6)], 0, 254);
+        //nVL[nFS + (nFSA * 6)] = nEIVL;
+        bRefresh = true;
+        break;
+
+      default: // Return
+        screen(100, nFSA);
+        return;
+        break;
+    }
+    nPos = nPosX;
+  }
+
+  // Draw
+  if (bRefresh || encoderStatus()) {
+    u8g2.clearBuffer();
+    u8g2.setFontPosTop();
+    printTitle(cTitleM);
+    printOptions(aMList, 5, -1);
+    u8g2.sendBuffer();
+
+    bRefresh = false;
+  }
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+// Screen functions /////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Draw tittle
+ * param char* title Title of screen
+ */
+void printTitle(char *title) {
+  // Draw
+  u8g2.setFontMode(1);
+  u8g2.setDrawColor(2);
+  u8g2.setFont(u8g2_font_8x13_tf);
+  u8g2.drawUTF8(0, 2, title);
+  u8g2.drawBox(0, 15, 128, 1);
+}
+
+/**
+ * Draw a options list - OK
+ * param char** aOptions Array of options
+ * param int nOptions Number of options in array
+ * param int nOptSel Number of option selected
+ */
+void printOptions(char **aList, int nOptions, int nOptSel) {
+  int aOShow[3] = { 0, 1, 2 }; // Only 3 lines
+  int nLenOpt;
+  nOptions--;
+
+  // Position
+  if (nPos != nEVL) {
+    if (nEVL > nOptions) {
+      nEVL = nPos = nOptions;
+    } else {
+      if (nEVL < 0) {
+        nEVL = nPos = 0;
+      } else {
+        nPos = nEVL;
+      }
+    }
+  }
+
+  // Options to show
+  if (nPos > 2) {
+    aOShow[0] = (nPos - 2);
+    aOShow[1] = (nPos - 1);
+    aOShow[2] = nPos;
+  }
+
+  // Draw
+  u8g2.setFont(u8g2_font_7x13_tf);
+  for (int i = 0; i <= min(nOptions, 2); i++) {
+    if (nPos == aOShow[i]) {
+      u8g2.drawBox(0, (16 * (i + 1)), 128, 16);
+    }
+    u8g2.drawUTF8(2, (16 * (i + 1) + 2), aList[aOShow[i]]);
+    if (nOptSel == aOShow[i]) {
+      if ((nLenOpt = strlen(aList[aOShow[i]])) < 15) {
+        u8g2.drawUTF8(2 + (nLenOpt * 7), (16 * (i + 1) + 2), " <<");
+      }
+    }
+  }
+}
+
+/**
+ * Print a confirm screen
+ * return bool Confirm
+ */
+bool printConfirm() {
+  bool r = true;
+  char *cTitleC;
+  char *cMensC;
+  char *cYes;
+  char *cNo;
+  int nIOpt = 1;
+
+  // Language
+  switch (nSysL) {
+    case 0:  // PT-BR
+      cTitleC = "Confirmar";
+      cMensC = "Tem certeza?";
+      cYes = "Sim";
+      cNo = "Não";
+      break;
+    case 1:  // EN-US
+      cTitleC = "Confirm";
+      cMensC = "Are you sure?";
+      cYes = "Yes";
+      cNo = "No";
+      break;
+  }
+
+  // Internal loop
+  while (r) {
+    encoderRead(true);
+
+    if (nEIVL >= 1) {
+      nEIVL = 1;
+    } else {
+      nEIVL = 0;
+    }
+
+    // Draw
+    if (nEIVL != nIOpt) {
+      nIOpt = nEIVL;
+
+      u8g2.clearBuffer();
+      u8g2.setFontPosTop();
+      printTitle(cTitleC);
+      u8g2.setFont(u8g2_font_7x13_tf);
+      u8g2.drawUTF8(2, 22, cMensC);
+      u8g2.drawUTF8(24, 47, cNo);
+      u8g2.drawUTF8(84, 47, cYes);
+
+      // Selected Box
+      if (nIOpt == 0) {
+        u8g2.drawBox(20, 45, 30, 16);
+      } else {
+        u8g2.drawBox(80, 45, 30, 16);
+      }
+      u8g2.sendBuffer();
+    }
+
+    // Exit of loop
+    if (bESW) {
+      r = bESW = false;
+    }
+  }
+
+  // Return
+  if (nIOpt == 1) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+/**
+ * Draw Value Selector
+ * param char* cMens Mensagem
+ * param int nValA Valor atual
+ * param int nValI Valor mínimo
+ * param int nValE Valor máximo
+ */
+void printValue(char *cMens, int nValA, int nValI, int nValE) {
+  bool r = true;
+  char *cTitleV;
+  char cVal[3];
+  int nIVal = nValA;
+  bool lInit = true;
+
+  // Language
+  switch (nSysL) {
+    case 0:  // PT-BR
+      cTitleV = "Escolha o Valor";
+      break;
+    case 1:  // EN-US
+      cTitleV = "Inform Value";
+      break;
+  }
+
+  // Loop Interno
+  while (r) {
+    encoderRead(true);
+
+    // Stop
+    if (bESW) {
+      r = bESW = false;
+    }
+
+    //Limit values
+    if (nEIVL >= nValE) {
+      nEIVL = nValE;
+    } else {
+      if (nEIVL < nValI) {
+        nEIVL = nValI;
+      }
+    }
+
+    // Draw
+    if (lInit || nEIVL != nIVal && r) {
+      nIVal = nEIVL;
+      strcpy(cVal, u8g2_u8toa(nIVal, 3));
+
+      u8g2.clearBuffer();
+      u8g2.setFontPosTop();
+      printTitle(cTitleV);
+      u8g2.setFont(u8g2_font_7x13_tf);
+      u8g2.drawUTF8(2, 22, cMens);
+      u8g2.drawBox(45, 45, 30, 16);
+      u8g2.drawUTF8(50, 47, cVal);
+      u8g2.sendBuffer();
+      lInit = false;
+    }
+  }
+}
+
+/**
+ * Draw Internal Options
+ * param char* cMens Message
+ * param int nValA Valor atual
+ * param int nValI Valor inicial
+ * param int nValE Valor final
+ */
+int printInternalOptions(char *cMensI, char **aListI, int nOptionsI, int nOptSelI) {
+  bool r = true;
+  char *cTitleI;
+  int nPosI = nOptSelI;
+  int aOShowI[2] = { 0, 1 };
+  nOptionsI--;
+  bool lRefI = true;
+
+  // Language
+  switch (nSysL) {
+    case 0:  // PT-BR
+      cTitleI = "Escolha a Opção";
+      break;
+    case 1:  // EN-US
+      cTitleI = "Select a Option";
+      break;
+  }
+
+  // Loop Interno
+  while (r) {
+    encoderRead(true);
+
+    // Return
+    if(bESW){
+      r = bESW = false;
+      return;
+    }
+
+    // Show positions
+    if (nPosI != nEIVL) {
+      if (nEIVL > nOptionsI) {
+        nEIVL = nPosI = nOptionsI;
+      } else {
+        if (nEIVL < 0) {
+          nEIVL = nPosI = 0;
+        } else {
+          nPosI = nEIVL;
+        }
+      }
+      lRefI = true;
+    }
+
+    // Draw
+    if (lRefI) {
+      if (nPosI > 1) {
+        aOShowI[0] = (nPosI - 1);
+        aOShowI[1] = nPosI;
+      }
+
+      u8g2.clearBuffer();
+      u8g2.setFontPosTop();
+      printTitle(cTitleI);
+      u8g2.setFont(u8g2_font_7x13_tf);
+      u8g2.drawUTF8(2, 17, cMensI);
+      for (int y = 0; y <= min(nOptionsI, 1); y++) {
+        if (nPosI == aOShowI[y]) {
+          u8g2.drawBox(0, (16 * (y + 2)), 128, 16);
+        }
+        u8g2.drawUTF8(2, (16 * (y + 2) + 2), aListI[aOShowI[y]]);        
+      }
+      u8g2.sendBuffer();
+    }
+    lRefI = false;
+  }
+
+  return nEIVL;
+}
+
+/**
+ * Draw saved screen
+ * param nNRoute
+ * param nNPos
+ */
+void printSaved(int nNRoute, int nNPos) {
+  char *cMensS;
+
+  // Language
+  switch (nSysL) {
+    case 0:  // PT-BR
+      cMensS = "Salvo";
+      break;
+    case 1:  // EN-US
+      cMensS = "Saved";
+      break;
+  }
+
+  // Draw
+  u8g2.clearBuffer();
+  u8g2.setFontPosTop();
+  u8g2.setFont(u8g2_font_8x13_tf);
+  u8g2.drawUTF8(44, 25, cMensS);
+  u8g2.sendBuffer();
+
+  // Route to Screen
+  delay(1000);
+  screen(nNRoute, nNPos);
+  return;
+}
+
 
 /////////////////////////////////////////////////////////////////////////////////////
 // Encoder Functions ////////////////////////////////////////////////////////////////
