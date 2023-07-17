@@ -88,6 +88,13 @@ void setup(void) {
  * Loop Function
  */
 void loop(void) {
+  // Return to HomeScreen after 60 secs
+  //  without encoder action
+  if ((nSysI + 60000) < millis()) {
+    nSysI = millis();
+    screen(0, 0);
+  }
+  
   // Encoder
   encoderRead(false);
 
