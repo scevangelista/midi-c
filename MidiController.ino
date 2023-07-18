@@ -1038,7 +1038,7 @@ bool sysLoad() {
 }
 
 /**
- * Set all default values to system - OK
+ * Set all default values to system
  * return bool Sucess
  */
 bool sysDefault() {
@@ -1069,6 +1069,33 @@ bool sysDefault() {
   }
 
   //Serial.println("Reseted data");
+  return true;
+}
+
+
+/**
+ * Save the atual config to preset
+ * param int p Preset to save
+ */
+bool savePreset(int p) {
+  int x;
+
+  // Set preset in EEPROM
+  EEPROM.update(1, p);
+
+  // Set FS data
+  for (int b = 0; b <= 5; b++) {
+    for (int a = 0; a <= 1; a++) {
+      x = (b * 4 + (a * 24)) + (p * 48) + 2;
+      EEPROM.update(x, nCH[b + (a * 6)]);
+      EEPROM.update(x + 1, nCT[b + (a * 6)]);
+      EEPROM.update(x + 2, nCC[b + (a * 6)]);
+      EEPROM.update(x + 3, nVL[b + (a * 6)]);
+    }
+  }
+
+  // Set memory preset
+  nSysP = p;
   return true;
 }
 
