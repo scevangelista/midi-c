@@ -81,8 +81,6 @@ void setup(void) {
 
   // Load EEPROM Data
   sysLoad();
-
-  delay(200);
 }
 
 /**
@@ -104,6 +102,8 @@ void loop(void) {
 
   // Execute a Midi
   midiExec();
+
+  delay(100);
 }
 
 
@@ -146,6 +146,22 @@ void screen(int nNewRoute, int nPosSet) {
 
     case 101:
       buttonConfScreen();
+      break;
+
+    case 200:
+      MChannelValueScreen();
+      break;
+
+    case 201:
+      MTypeOptionsScreen();
+      break;
+
+    case 202:
+      MControllerValueScreen();
+      break;
+
+    case 203:
+      MValueValueScreen();
       break;
 
     case 11:
@@ -421,7 +437,6 @@ void buttonsScreen() {
   char *aFList[7];
   char *cTitleF;
 
-
   // Language
   switch (nSysL) {
     case 0:  // PT-BR
@@ -429,7 +444,7 @@ void buttonsScreen() {
       aFList[6] = "Voltar";
       break;
     case 1:  // EN-US
-      cTitle = "FSW Configure";
+      cTitleF = "FSW Configure";
       aFList[6] = "Back";
   }
 
@@ -516,12 +531,6 @@ void buttonScreen() {
 void buttonConfScreen() {
   char *aMList[3];
   char *cTitleM;
-  char *cTypeM[2];
-  int nPosX = nPos;
-
-  // Type
-  cTypeM[1] = "PC";
-  cTypeM[0] = "CC";
 
   // Language
   switch (nSysL) {
@@ -542,48 +551,35 @@ void buttonConfScreen() {
 
   // Title based in action
   if (nFSA == 0) {
-    cTitle = "FSW ON ";
+    cTitleM = "FSW ON ";
   } else {
-    cTitle = "FSW OFF";
+    cTitleM = "FSW OFF";
   }
 
   // Configure MIDI
   if (bESW) {
     switch (nPos) {
       case 0:  // Channel   
-        printValue((aMList[nPos]), nCH[nFS + (nFSA * 6)], 0, 16);
-        Serial.println((String) "Valor Retornado: " + nEIVL);
-        //nCH[nFS + (nFSA * 6)] = nEIVL;
-        bRefresh = true;
+        screen(200, nCH[nFS + (nFSA * 6)]);
         break;
 
       case 1: // Type
-        printInternalOptions((aMList[nPos]), cTypeM, 2, nCT[nFS + (nFSA * 6)]);
-        Serial.println((String) "Valor Retornado: "+ nEIVL);
-        Serial.println((nFS + (nFSA * 6)));
-        bRefresh = true;
+        screen(201, nCT[nFS + (nFSA * 6)]);
         break;
 
       case 2:  // CC
-        printValue((aMList[nPos]), nCC[nFS + (nFSA * 6)], 0, 254);
-        Serial.println((String) "Valor Retornado: "+ nEIVL);
-        //Serial.println((String) "Posição: "+ (nFS + (nFSA * 6)));
-        //nCC[nFS + (nFSA * 6)] = nEIVL;
-        bRefresh = true;
+        screen(202, nCC[nFS + (nFSA * 6)]);
         break;
 
       case 3:  // Value
-        printValue((aMList[nPos]), nVL[nFS + (nFSA * 6)], 0, 254);
-        //nVL[nFS + (nFSA * 6)] = nEIVL;
-        bRefresh = true;
+        screen(203, nCC[nFS + (nFSA * 6)]);
         break;
 
       default: // Return
         screen(100, nFSA);
-        return;
         break;
     }
-    nPos = nPosX;
+    return;
   }
 
   // Draw
@@ -592,6 +588,229 @@ void buttonConfScreen() {
     u8g2.setFontPosTop();
     printTitle(cTitleM);
     printOptions(aMList, 5, -1);
+    u8g2.sendBuffer();
+
+    bRefresh = false;
+  }
+}
+
+/**
+ * Draw Midi Type Options
+ */
+void MTypeOptionsScreen() {
+  char *aTList[2];
+  char *cTitleT;
+
+  // Language
+  switch (nSysL) {
+    case 0:  // PT-BR
+      cTitleT ="Tipo do Comando";
+      break;
+    case 1:  // EN-US
+      cTitleT ="Command Type";
+      break;
+  }
+
+  // Options
+  aTList[0] = "CC";
+  aTList[1] = "PC";
+
+  // Configure MIDI CC
+  if (bESW) {
+    nCC[nFS + (nFSA * 6)] = nPos;
+    screen(101, 1);
+    return;
+  }
+
+  // Draw
+  if (bRefresh || encoderStatus()) {
+    u8g2.clearBuffer();
+    u8g2.setFontPosTop();
+    printTitle(cTitleT);
+    printOptions(aTList, 2, nCC[nFS + (nFSA * 6)]);
+    u8g2.sendBuffer();
+
+    bRefresh = false;
+  }
+}
+
+/**
+ * Draw Midi Channel Value
+ */
+void MChannelValueScreen() {
+  char *cTitleMC;
+  char *cMensMC;
+  char cMCVal[3];
+  int nMCVal;
+
+  // Language
+  switch (nSysL) {
+    case 0:  // PT-BR
+      cTitleMC = "Canal";
+      cMensMC = "Selecione o valor";
+      break;
+    case 1:  // EN-US
+      cTitleMC = "Channel";
+      cMensMC = "Select Value";
+      break;
+  }
+
+  // Value Min/Max
+  if (nPos != nEVL) {
+    if (nEVL > 16) {
+      nEVL = nPos = 16;
+    } else {
+      if (nEVL < 0) {
+        nEVL = nPos = 0;
+      } else {
+        nPos = nEVL;
+      }
+    }
+
+    bRefresh = true;
+  }
+
+  // Configure MIDI CH
+  if (bESW) {
+    nCH[nFS + (nFSA * 6)] = nPos;
+    screen(101, 0);
+    return;
+  }
+
+  // Draw
+  if (bRefresh || encoderStatus()) {
+    nMCVal = nPos;
+    strcpy(cMCVal, u8g2_u8toa(nMCVal, 3));
+
+    u8g2.clearBuffer();
+    u8g2.setFontPosTop();
+    printTitle(cTitleMC);
+    u8g2.setFont(u8g2_font_7x13_tf);
+    u8g2.drawUTF8(2, 22, cMensMC);
+    u8g2.drawBox(45, 45, 30, 16);
+    u8g2.drawUTF8(50, 47, cMCVal);
+    u8g2.sendBuffer();
+
+    bRefresh = false;
+  }
+}
+
+/**
+ * Draw Midi Controller Value
+ */
+void MControllerValueScreen() {
+  char *cTitleMCC;
+  char *cMensMCC;
+  char cMCCVal[3];
+  int nMCCVal;
+
+  // Language
+  switch (nSysL) {
+    case 0:  // PT-BR
+      cTitleMCC = "Controller";
+      cMensMCC = "Selecione o valor";
+      break;
+    case 1:  // EN-US
+      cTitleMCC = "Controller";
+      cMensMCC = "Select Value";
+      break;
+  }
+
+  // Value Min/Max
+  if (nPos != nEVL) {
+    if (nEVL > 254) {
+      nEVL = nPos = 254;
+    } else {
+      if (nEVL < 0) {
+        nEVL = nPos = 0;
+      } else {
+        nPos = nEVL;
+      }
+    }
+
+    bRefresh = true;
+  }
+
+  // Configure MIDI CH
+  if (bESW) {
+    nCC[nFS + (nFSA * 6)] = nPos;
+    screen(101, 0);
+    return;
+  }
+
+  // Draw
+  if (bRefresh || encoderStatus()) {
+    nMCCVal = nPos;
+    strcpy(cMCCVal, u8g2_u8toa(nMCCVal, 3));
+
+    u8g2.clearBuffer();
+    u8g2.setFontPosTop();
+    printTitle(cTitleMCC);
+    u8g2.setFont(u8g2_font_7x13_tf);
+    u8g2.drawUTF8(2, 22, cMensMCC);
+    u8g2.drawBox(45, 45, 30, 16);
+    u8g2.drawUTF8(50, 47, cMCCVal);
+    u8g2.sendBuffer();
+
+    bRefresh = false;
+  }
+}
+
+/**
+ * Draw Midi Value Value
+ */
+void MValueValueScreen() {
+  char *cTitleMV;
+  char *cMensMV;
+  char cMVVal[3];
+  int nMVVal;
+
+  // Language
+  switch (nSysL) {
+    case 0:  // PT-BR
+      cTitleMV = "Controller";
+      cMensMV = "Selecione o valor";
+      break;
+    case 1:  // EN-US
+      cTitleMV = "Controller";
+      cMensMV = "Select Value";
+      break;
+  }
+
+  // Value Min/Max
+  if (nPos != nEVL) {
+    if (nEVL > 254) {
+      nEVL = nPos = 254;
+    } else {
+      if (nEVL < 0) {
+        nEVL = nPos = 0;
+      } else {
+        nPos = nEVL;
+      }
+    }
+
+    bRefresh = true;
+  }
+
+  // Configure MIDI CH
+  if (bESW) {
+    nVL[nFS + (nFSA * 6)] = nPos;
+    screen(101, 0);
+    return;
+  }
+
+  // Draw
+  if (bRefresh || encoderStatus()) {
+    nMVVal = nPos;
+    strcpy(cMVVal, u8g2_u8toa(nMVVal, 3));
+
+    u8g2.clearBuffer();
+    u8g2.setFontPosTop();
+    printTitle(cTitleMV);
+    u8g2.setFont(u8g2_font_7x13_tf);
+    u8g2.drawUTF8(2, 22, cMensMV);
+    u8g2.drawBox(45, 45, 30, 16);
+    u8g2.drawUTF8(50, 47, cMVVal);
     u8g2.sendBuffer();
 
     bRefresh = false;
@@ -732,141 +951,6 @@ bool printConfirm() {
   } else {
     return false;
   }
-}
-
-/**
- * Draw Value Selector
- * param char* cMens Mensagem
- * param int nValA Valor atual
- * param int nValI Valor mínimo
- * param int nValE Valor máximo
- */
-void printValue(char *cMens, int nValA, int nValI, int nValE) {
-  bool r = true;
-  char *cTitleV;
-  char cVal[3];
-  int nIVal = nValA;
-  bool lInit = true;
-
-  // Language
-  switch (nSysL) {
-    case 0:  // PT-BR
-      cTitleV = "Escolha o Valor";
-      break;
-    case 1:  // EN-US
-      cTitleV = "Inform Value";
-      break;
-  }
-
-  // Loop Interno
-  while (r) {
-    encoderRead(true);
-
-    // Stop
-    if (bESW) {
-      r = bESW = false;
-    }
-
-    //Limit values
-    if (nEIVL >= nValE) {
-      nEIVL = nValE;
-    } else {
-      if (nEIVL < nValI) {
-        nEIVL = nValI;
-      }
-    }
-
-    // Draw
-    if (lInit || nEIVL != nIVal && r) {
-      nIVal = nEIVL;
-      strcpy(cVal, u8g2_u8toa(nIVal, 3));
-
-      u8g2.clearBuffer();
-      u8g2.setFontPosTop();
-      printTitle(cTitleV);
-      u8g2.setFont(u8g2_font_7x13_tf);
-      u8g2.drawUTF8(2, 22, cMens);
-      u8g2.drawBox(45, 45, 30, 16);
-      u8g2.drawUTF8(50, 47, cVal);
-      u8g2.sendBuffer();
-      lInit = false;
-    }
-  }
-}
-
-/**
- * Draw Internal Options
- * param char* cMens Message
- * param int nValA Valor atual
- * param int nValI Valor inicial
- * param int nValE Valor final
- */
-int printInternalOptions(char *cMensI, char **aListI, int nOptionsI, int nOptSelI) {
-  bool r = true;
-  char *cTitleI;
-  int nPosI = nOptSelI;
-  int aOShowI[2] = { 0, 1 };
-  nOptionsI--;
-  bool lRefI = true;
-
-  // Language
-  switch (nSysL) {
-    case 0:  // PT-BR
-      cTitleI = "Escolha a Opção";
-      break;
-    case 1:  // EN-US
-      cTitleI = "Select a Option";
-      break;
-  }
-
-  // Loop Interno
-  while (r) {
-    encoderRead(true);
-
-    // Return
-    if(bESW){
-      r = bESW = false;
-      return;
-    }
-
-    // Show positions
-    if (nPosI != nEIVL) {
-      if (nEIVL > nOptionsI) {
-        nEIVL = nPosI = nOptionsI;
-      } else {
-        if (nEIVL < 0) {
-          nEIVL = nPosI = 0;
-        } else {
-          nPosI = nEIVL;
-        }
-      }
-      lRefI = true;
-    }
-
-    // Draw
-    if (lRefI) {
-      if (nPosI > 1) {
-        aOShowI[0] = (nPosI - 1);
-        aOShowI[1] = nPosI;
-      }
-
-      u8g2.clearBuffer();
-      u8g2.setFontPosTop();
-      printTitle(cTitleI);
-      u8g2.setFont(u8g2_font_7x13_tf);
-      u8g2.drawUTF8(2, 17, cMensI);
-      for (int y = 0; y <= min(nOptionsI, 1); y++) {
-        if (nPosI == aOShowI[y]) {
-          u8g2.drawBox(0, (16 * (y + 2)), 128, 16);
-        }
-        u8g2.drawUTF8(2, (16 * (y + 2) + 2), aListI[aOShowI[y]]);        
-      }
-      u8g2.sendBuffer();
-    }
-    lRefI = false;
-  }
-
-  return nEIVL;
 }
 
 /**
@@ -1034,7 +1118,6 @@ bool sysLoad() {
   // Read Preset
   nSysP = EEPROM.read(1);
 
-  //Serial.println("Loaded data");
   return true;
 }
 
