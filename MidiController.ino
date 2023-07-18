@@ -1072,7 +1072,6 @@ bool sysDefault() {
   return true;
 }
 
-
 /**
  * Save the atual config to preset
  * param int p Preset to save
@@ -1099,6 +1098,26 @@ bool savePreset(int p) {
   return true;
 }
 
+/**
+ * Load preset data
+ * param int p Preset to load
+ */
+bool loadPreset(int p) {
+  int x;
+
+  // Load FS data
+  for (int b = 0; b <= 5; b++) {
+    for (int a = 0; a <= 1; a++) {
+      x = (b * 4 + (a * 24)) + (p * 48) + 2;
+      nCH[b + (a * 6)] = EEPROM.read(x);
+      nCT[b + (a * 6)] = EEPROM.read(x + 1);
+      nCC[b + (a * 6)] = EEPROM.read(x + 2);
+      nVL[b + (a * 6)] = EEPROM.read(x + 3);
+    }
+  }
+
+  return true;
+}
 
 /////////////////////////////////////////////////////////////////////////////////////
 // MIDI functions ///////////////////////////////////////////////////////////////////
