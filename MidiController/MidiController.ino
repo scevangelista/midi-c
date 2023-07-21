@@ -1147,12 +1147,11 @@ bool sysDefault() {
     EEPROM.update((i + 146), nValeton[i]);
   }
 
-  // Valeton
+  // POD X3
   for(int i = 0; i < 48; i++){
     EEPROM.update((i + 194), nPodX3[i]);
   }
 
-  //Serial.println("Reseted data");
   return true;
 }
 
