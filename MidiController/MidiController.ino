@@ -731,7 +731,7 @@ void MControllerValueScreen() {
     bRefresh = true;
   }
 
-  // Configure MIDI CH
+  // Configure MIDI Controller
   if (bESW) {
     nCC[nFS + (nFSA * 6)] = nPos;
     screen(101, 0);
@@ -768,11 +768,11 @@ void MValueValueScreen() {
   // Language
   switch (nSysL) {
     case 0:  // PT-BR
-      cTitleMV = "Controller";
+      cTitleMV = "Valor";
       cMensMV = "Selecione o valor";
       break;
     case 1:  // EN-US
-      cTitleMV = "Controller";
+      cTitleMV = "Value";
       cMensMV = "Select Value";
       break;
   }
@@ -792,7 +792,7 @@ void MValueValueScreen() {
     bRefresh = true;
   }
 
-  // Configure MIDI CH
+  // Configure MIDI Value
   if (bESW) {
     nVL[nFS + (nFSA * 6)] = nPos;
     screen(101, 0);
