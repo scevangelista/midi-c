@@ -1197,6 +1197,9 @@ bool loadPreset(int p) {
     }
   }
 
+  // Set preset in EEPROM
+  EEPROM.update(1, p);
+
   return true;
 }
 
