@@ -11,7 +11,7 @@ This project uses communication directly with a MIDI port.
 ## Roadmap
 
 - Create assembly diagram.
-- Add more device settings.
+- Add more device presets.
 - Create an Arduino Nano version.
 
 
