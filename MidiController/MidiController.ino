@@ -1115,6 +1115,7 @@ bool sysLoad() {
 
   // Read Preset
   nSysP = EEPROM.read(1);
+  loadPreset(nSysP);
 
   return true;
 }
@@ -1252,6 +1253,8 @@ void midiSend(int ch, int ct, int cc, int vl) {
   else{
     data1 = 0xB0 + ch; //CC
   }
+  Serial.println((String) "Data1 "+ data1 + " - CC "+ cc +" - VL " + vl);
+
   Serial.write(data1);
   Serial.write(cc);
   Serial.write(vl);
