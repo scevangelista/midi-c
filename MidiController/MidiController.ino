@@ -570,7 +570,7 @@ void buttonConfScreen() {
         break;
 
       case 3:  // Value
-        screen(203, nCC[nFS + (nFSA * 6)]);
+        screen(203, nVL[nFS + (nFSA * 6)]);
         break;
 
       default: // Return
@@ -613,9 +613,9 @@ void MTypeOptionsScreen() {
   aTList[0] = "CC";
   aTList[1] = "PC";
 
-  // Configure MIDI CC
+  // Configure MIDI CT
   if (bESW) {
-    nCC[nFS + (nFSA * 6)] = nPos;
+    nCT[nFS + (nFSA * 6)] = nPos;
     screen(101, 1);
     return;
   }
@@ -625,7 +625,7 @@ void MTypeOptionsScreen() {
     u8g2.clearBuffer();
     u8g2.setFontPosTop();
     printTitle(cTitleT);
-    printOptions(aTList, 2, nCC[nFS + (nFSA * 6)]);
+    printOptions(aTList, 2, nCT[nFS + (nFSA * 6)]);
     u8g2.sendBuffer();
 
     bRefresh = false;
@@ -658,8 +658,8 @@ void MChannelValueScreen() {
     if (nEVL > 16) {
       nEVL = nPos = 16;
     } else {
-      if (nEVL < 0) {
-        nEVL = nPos = 0;
+      if (nEVL < 1) {
+        nEVL = nPos = 1;
       } else {
         nPos = nEVL;
       }
@@ -1248,12 +1248,12 @@ void midiSend(int ch, int ct, int cc, int vl) {
   int data1;
 
   if(ct == 1){
-    data1 = 0xC0 + ch; //PC
+    data1 = 192 + ch - 1; //PC
   }
   else{
-    data1 = 0xB0 + ch; //CC
+    data1 = 176 + ch - 1; //CC
   }
-  
+
   Serial.write(data1);
   Serial.write(cc);
   Serial.write(vl);
