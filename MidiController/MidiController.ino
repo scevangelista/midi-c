@@ -1240,7 +1240,7 @@ void midiExec(){
 /**
  * Send Midi Comand
  * param int ch Channel
- * param int ct Command Type 1-PC 2-CC
+ * param int ct Command Type 0-PC 1-CC
  * param int cc Controller
  * param int vl Value
  */ 
