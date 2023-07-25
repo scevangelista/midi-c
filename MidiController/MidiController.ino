@@ -610,8 +610,8 @@ void MTypeOptionsScreen() {
   }
 
   // Options
-  aTList[0] = "CC";
-  aTList[1] = "PC";
+  aTList[0] = "PC";
+  aTList[1] = "CC";
 
   // Configure MIDI CT
   if (bESW) {
@@ -1247,11 +1247,11 @@ void midiExec(){
 void midiSend(int ch, int ct, int cc, int vl) {
   int data1;
 
-  if(ct == 1){
-    data1 = 192 + ch - 1; //PC
+  if(ct == 0){
+    data1 = 192 + ch; //PC
   }
   else{
-    data1 = 176 + ch - 1; //CC
+    data1 = 176 + ch; //CC
   }
 
   Serial.write(data1);
