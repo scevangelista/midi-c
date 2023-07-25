@@ -548,7 +548,7 @@ void buttonConfScreen() {
   }
 
   // Title based in action
-  if (nFSA == 0) {
+  if (nFSA == 1) {
     cTitleM = "FSW ON ";
   } else {
     cTitleM = "FSW OFF";
