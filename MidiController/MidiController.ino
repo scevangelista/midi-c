@@ -102,8 +102,6 @@ void loop(void) {
 
   // Execute a Midi
   midiExec();
-
-  delay(100);
 }
 
 
@@ -550,7 +548,7 @@ void buttonConfScreen() {
   }
 
   // Title based in action
-  if (nFSA == 0) {
+  if (nFSA == 1) {
     cTitleM = "FSW ON ";
   } else {
     cTitleM = "FSW OFF";
@@ -572,7 +570,7 @@ void buttonConfScreen() {
         break;
 
       case 3:  // Value
-        screen(203, nCC[nFS + (nFSA * 6)]);
+        screen(203, nVL[nFS + (nFSA * 6)]);
         break;
 
       default: // Return
@@ -612,12 +610,12 @@ void MTypeOptionsScreen() {
   }
 
   // Options
-  aTList[0] = "CC";
-  aTList[1] = "PC";
+  aTList[0] = "PC";
+  aTList[1] = "CC";
 
-  // Configure MIDI CC
+  // Configure MIDI CT
   if (bESW) {
-    nCC[nFS + (nFSA * 6)] = nPos;
+    nCT[nFS + (nFSA * 6)] = nPos;
     screen(101, 1);
     return;
   }
@@ -627,7 +625,7 @@ void MTypeOptionsScreen() {
     u8g2.clearBuffer();
     u8g2.setFontPosTop();
     printTitle(cTitleT);
-    printOptions(aTList, 2, nCC[nFS + (nFSA * 6)]);
+    printOptions(aTList, 2, nCT[nFS + (nFSA * 6)]);
     u8g2.sendBuffer();
 
     bRefresh = false;
@@ -660,8 +658,8 @@ void MChannelValueScreen() {
     if (nEVL > 16) {
       nEVL = nPos = 16;
     } else {
-      if (nEVL < 0) {
-        nEVL = nPos = 0;
+      if (nEVL < 1) {
+        nEVL = nPos = 1;
       } else {
         nPos = nEVL;
       }
@@ -1117,6 +1115,7 @@ bool sysLoad() {
 
   // Read Preset
   nSysP = EEPROM.read(1);
+  loadPreset(nSysP);
 
   return true;
 }
@@ -1126,8 +1125,8 @@ bool sysLoad() {
  * return bool Sucess
  */
 bool sysDefault() {
-  int nValeton[] = {0,1,48,0,0,1,49,0,0,1,51,0,0,1,54,0,0,1,55,0,0,1,56,0,0,1,48,64,0,1,49,64,0,1,51,64,0,1,54,64,0,1,55,64,0,1,56,64};
-  int nPodX3[]   = {0,1,26,0,0,1,25,0,0,1,22,0,0,1,50,0,0,1,28,0,0,1,36,0,0,1,26,64,0,1,25,64,0,1,22,64,0,1,50,64,0,1,28,64,0,1,36,64};
+  int nValeton[] = {1,1,48,0,1,1,49,0,1,1,51,0,1,1,54,0,1,1,55,0,1,1,56,0,1,1,48,64,1,1,49,64,1,1,51,64,1,1,54,64,1,1,55,64,1,1,56,64};
+  int nPodX3[]   = {1,1,26,0,1,1,25,0,1,1,22,0,1,1,50,0,1,1,28,0,1,1,36,0,1,1,26,64,1,1,25,64,1,1,22,64,1,1,50,64,1,1,28,64,1,1,36,64};
 
   // Language 0 - PT-BR
   nSysL = 0;
@@ -1199,6 +1198,9 @@ bool loadPreset(int p) {
     }
   }
 
+  // Set preset in EEPROM
+  EEPROM.update(1, p);
+
   return true;
 }
 
@@ -1238,19 +1240,20 @@ void midiExec(){
 /**
  * Send Midi Comand
  * param int ch Channel
- * param int ct Command Type 1-PC 2-CC
+ * param int ct Command Type 0-PC 1-CC
  * param int cc Controller
  * param int vl Value
  */ 
 void midiSend(int ch, int ct, int cc, int vl) {
   int data1;
 
-  if(ct == 1){
-    data1 = 0xC0 + ch; //PC
+  if(ct == 0){
+    data1 = 192 + ch; //PC
   }
   else{
-    data1 = 0xB0 + ch; //CC
+    data1 = 176 + ch; //CC
   }
+
   Serial.write(data1);
   Serial.write(cc);
   Serial.write(vl);
